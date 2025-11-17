@@ -4,9 +4,13 @@ import re
 from docx import Document
 from openai import OpenAI, RateLimitError
 import yfinance as yf
+import streamlit as st
 
-# OpenAI client reads OPENAI_API_KEY from your environment
-client = OpenAI()
+# OpenAI client reads api key from Streamlit secrets
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+
+# Simple cache to avoid repeated LLM calls for the same question
+LLM_CACHE = {}
 
 
 def _norm(text: str) -> str:
@@ -153,6 +157,7 @@ COMPANY_TICKERS = {
     "pfe": "PFE",
     "google": "GOOGL",
     "alphabet": "GOOGL",
+    "googl": "GOOGL",
 }
 
 
@@ -195,7 +200,6 @@ def build_index():
         idx.add_doc(text, path)
 
     return idx
-
 
 
 def _detect_company_from_query(q: str):
@@ -304,26 +308,85 @@ def _get_company_context(index, company_name: str | None, query: str, detail: bo
 
     # if we did not find any company specific doc, fall back to search
     if not texts:
-        k = 8 if detail else 4
+        k = 6 if detail else 3
         hits = index.search(query, k=k)
         texts = [h["text"] for h in hits]
 
     context = " ".join(_norm(t) for t in texts)
 
     # limit context size to control tokens
-    max_chars = 8000
+    max_chars = 4000
     if len(context) > max_chars:
         context = context[:max_chars]
 
     return context
 
 
+def _scan_pfizer_facts(index):
+    """
+    Scan Pfizer document once to extract pipeline, phase 3 and under review counts.
+    Rule based, no LLM needed.
+    """
+    pf_text = ""
+    for d in index.docs:
+        path = d["meta"].get("path", "").lower()
+        if "pfizer" in path:
+            pf_text += " " + d["text"]
+
+    pf_text = _norm(pf_text)
+
+    facts = {"pipeline": None, "phase3": None, "under_review": None}
+
+    m = re.search(r"(\d{2,3})\s+(development\s+)?programs", pf_text, re.I)
+    if m:
+        facts["pipeline"] = m.group(1)
+
+    m = re.search(r"(\d{1,3})\s+candidates?\s+in\s+phase\s*3", pf_text, re.I)
+    if m:
+        facts["phase3"] = m.group(1)
+
+    m = re.search(r"(\d{1,3})\s+under regulatory review", pf_text, re.I)
+    if m:
+        facts["under_review"] = m.group(1)
+
+    return facts
+
+
+def _answer_pfizer_programs(index, question: str) -> str:
+    """
+    Direct answer for questions like:
+    - How many programs does Pfizer have
+    - What is Pfizer pipeline size
+    Works even if the LLM is rate limited.
+    """
+    facts = _scan_pfizer_facts(index)
+    parts = []
+
+    if facts.get("pipeline"):
+        parts.append(f"Based on the Pfizer document the research and development pipeline includes about {facts['pipeline']} programs.")
+    if facts.get("phase3"):
+        parts.append(f"There are around {facts['phase3']} candidates in phase 3 development.")
+    if facts.get("under_review"):
+        parts.append(f"Roughly {facts['under_review']} programs are described as under regulatory review.")
+
+    if not parts:
+        return "I could not read a clear number of programs for Pfizer from the document."
+
+    return " ".join(parts)
+
+
 def _make_llm_answer(question: str, context: str, detail: bool = False) -> str:
     """
     Ask the OpenAI model to answer using only the provided context.
+    Uses a simple cache to reduce repeated calls.
     """
     if not context.strip():
         return "I could not find relevant content in the documents for this question."
+
+    # simple cache key uses question and detail flag only
+    cache_key = (question.strip().lower(), detail)
+    if cache_key in LLM_CACHE:
+        return LLM_CACHE[cache_key]
 
     system_content = (
         "You are a careful research assistant. Answer the question using only the context below. "
@@ -348,8 +411,11 @@ def _make_llm_answer(question: str, context: str, detail: bool = False) -> str:
             model="gpt-4o-mini",
             messages=messages,
             temperature=0.3,
+            max_tokens=350,
         )
-        return completion.choices[0].message.content.strip()
+        answer = completion.choices[0].message.content.strip()
+        LLM_CACHE[cache_key] = answer
+        return answer
 
     except RateLimitError:
         return (
@@ -366,9 +432,10 @@ def smart_answer(index, query: str, detail: bool = False) -> str:
     Main entry point used by the Streamlit app.
 
     1. If the question is a greeting or meta question, answer from FAQ.
-    2. If the question asks about market trend, share price, nifty share, or recent profit,
+    2. If the question asks about market trend, share price, performance, or recent profit,
        answer using live market data for the three companies.
-    3. Otherwise, detect which company is mentioned and feed that document
+    3. If the question is about Pfizer program count or pipeline size, answer with rule based facts.
+    4. Otherwise, detect which company is mentioned and feed that document
        to the LLM to answer from context.
     """
     nq = _norm_question(query)
@@ -377,6 +444,8 @@ def smart_answer(index, query: str, detail: bool = False) -> str:
     for key, value in FAQ_QA.items():
         if nq == key or nq.startswith(key + " "):
             return f"Question  {query}\n\nAnswer\n{value}"
+
+    q_low = query.lower()
 
     # 2. Market related questions for the three companies
     market_keywords = [
@@ -388,17 +457,32 @@ def smart_answer(index, query: str, detail: bool = False) -> str:
         "latest profit",
         "earnings",
         "recent earnings",
+        "recent performance",
+        "stock performance",
+        "price performance",
     ]
-    q_low = query.lower()
     is_market_question = any(kw in q_low for kw in market_keywords)
 
     if is_market_question:
         company_name, ticker = _detect_company_from_query(query)
+        # treat questions like "google recent performance" as market even without explicit ticker
+        if not ticker and "google" in q_low:
+            company_name, ticker = "google", "GOOGL"
+        if not ticker and "pfizer" in q_low:
+            company_name, ticker = "pfizer", "PFE"
+        if not ticker and ("jpmorgan" in q_low or "jpm" in q_low):
+            company_name, ticker = "jpmorgan", "JPM"
+
         if ticker:
             market_text = _make_market_answer(company_name, ticker, query)
             return f"Question  {query}\n\nAnswer\n{market_text}"
 
-    # 3. Normal document based answer through the LLM
+    # 3. Pfizer program and pipeline questions answered rule based, without LLM
+    if "pfizer" in q_low and any(w in q_low for w in ["program", "pipeline", "phase 3", "phase three"]):
+        pf_answer = _answer_pfizer_programs(index, query)
+        return f"Question  {query}\n\nAnswer\n{pf_answer}"
+
+    # 4. Normal document based answer through the LLM
     company_name, _ = _detect_company_from_query(query)
 
     context = _get_company_context(index, company_name, query, detail)
