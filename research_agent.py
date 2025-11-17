@@ -185,16 +185,17 @@ class SimpleIndex:
 def build_index():
     idx = SimpleIndex()
 
-    # update these paths if your documents move
-    jp_path = r"C:\Users\raksh\Downloads\JPMorgan Chase_ Deep Dive on IT and Digital Transformation Strategy (1).docx"
-    pf_path = r"C:\Users\raksh\Downloads\Pfizer – R&D Deep Dive Report (1).docx"
-    gg_path = r"C:\Users\raksh\Downloads\Google Deep Dive on AI and Cloud Transformation Strategy.docx"
+    # paths relative to repo root on Streamlit Cloud
+    jp_path = "docs/JPMorgan Chase Deep Dive on IT and Digital Transformation Strategy.docx"
+    pf_path = "docs/Pfizer – R&D Deep Dive Report.docx"
+    gg_path = "docs/Google Deep Dive on AI and Cloud Transformation Strategy.docx"
 
     for path in [jp_path, pf_path, gg_path]:
         text = load_docx(path)
         idx.add_doc(text, path)
 
     return idx
+
 
 
 def _detect_company_from_query(q: str):
