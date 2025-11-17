@@ -134,6 +134,9 @@ FAQ_QA = {
     "what is pfizer pipeline structure": (
         "Pfizer pipeline is structured as a mix of early research projects, mid stage assets, late stage candidates, and near approval or launch programs."
     ),
+    "what diseases or areas does pfizer target": (
+        "Pfizer focuses on therapeutic areas such as oncology, vaccines, inflammation and immunology, rare diseases, and other high unmet need conditions."
+    ),
 
     # Google general
     "what is google": (
@@ -156,10 +159,20 @@ FAQ_QA = {
         "through Google Cloud so that customers can build their own solutions. AI is presented as a core technology that "
         "supports productivity, analytics, and new applications."
     ),
+    "what ai technologies does google highlight": (
+        "The Google document highlights advanced AI models, large scale training systems, custom accelerators, and enterprise AI solutions delivered through Google Cloud."
+    ),
     "what is google cloud strategy": (
         "Google cloud strategy is to provide a secure and scalable cloud platform with strong data, analytics, and AI capabilities. "
         "It focuses on multi cloud and open approaches, industry specific solutions, and close partnership with customers to support "
         "their digital transformation."
+    ),
+    "what is google cloud transformation strategy": (
+        "Google cloud transformation strategy is to help enterprises modernize their applications, adopt data and AI platforms, and run securely at scale across multiple regions."
+    ),
+    "what is google digital transformation strategy": (
+        "Google digital transformation strategy is to help customers modernize using cloud, AI, data platforms, cybersecurity, "
+        "and open multi cloud tools that integrate with their existing landscapes."
     ),
     "how is google scaling its ai infrastructure": (
         "The Google document explains that the company is scaling AI infrastructure by expanding data center capacity, "
@@ -170,12 +183,11 @@ FAQ_QA = {
         "The document indicates that Google maintains large engineering and AI teams that work on core models, platforms, "
         "and tools. These engineers focus on improving model quality, reliability, and integration into products and cloud offerings."
     ),
-    "what ai technologies does google highlight": (
-        "The Google document highlights advanced AI models, large scale training systems, custom accelerators, and enterprise AI solutions delivered through Google Cloud."
+    "what industries is google cloud targeting": (
+        "Google Cloud focuses on industries such as financial services, retail, manufacturing, healthcare, media, and the public sector, providing industry specific AI and data solutions."
     ),
-    "what is google digital transformation strategy": (
-        "Google digital transformation strategy is to help customers modernize using cloud, AI, data platforms, cybersecurity, "
-        "and open multi cloud tools that integrate with their existing landscapes."
+    "what are the main themes in the google research": (
+        "The main themes in the Google document are AI first strategy, large scale cloud infrastructure, data platforms, industry solutions, and supporting digital transformation for customers."
     ),
 }
 
@@ -441,7 +453,7 @@ def _make_llm_answer(question: str, context: str, detail: bool = False) -> str:
             model="gpt-4o-mini",
             messages=messages,
             temperature=0.3,
-            max_tokens=350,
+            max_tokens=300,
         )
         answer = completion.choices[0].message.content.strip()
         LLM_CACHE[cache_key] = answer
@@ -470,10 +482,9 @@ def smart_answer(index, query: str, detail: bool = False) -> str:
     """
     nq = _norm_question(query)
 
-    # 1. FAQ for greetings and meta questions
-    for key, value in FAQ_QA.items():
-        if nq == key or nq.startswith(key + " "):
-            return f"Question  {query}\n\nAnswer\n{value}"
+    # 1. FAQ for exact matches only
+    if nq in FAQ_QA:
+        return f"Question  {query}\n\nAnswer\n{FAQ_QA[nq]}"
 
     q_low = query.lower()
 
