@@ -33,12 +33,16 @@ FAQ_QA = {
     "which companies are covered": "I currently cover JPMorgan, Pfizer, and Google.",
     "what documents are you using": "I use deep dive research documents for JPMorgan, Pfizer, and Google that you loaded into the system, and for market questions I use live market data.",
     "how should i ask questions": "Mention the company name and the topic you care about, such as technology strategy, digital transformation, research and development pipeline, cloud, artificial intelligence, or market trend.",
+    "what companies do you cover": "I currently cover JPMorgan, Pfizer, and Google using your uploaded research documents and live market data.",
+    "how do you answer questions": "I answer using your research documents first, and if it is a market question, I use live stock data.",
+    "how to use this chatbot": "Ask about Google, JPMorgan, or Pfizer strategy, technology, cloud, AI, digital transformation, pipeline, research and development, or stock performance.",
+    "what topics can you answer": "AI, cloud, digital transformation, investment, engineering, infrastructure, pipeline, financial performance, market trend, and high level summaries.",
 
     # JPMorgan general
     "what is jpmorgan": (
-        "JPMorgan is a global financial services firm with large operations in retail banking, "
+        "JPMorgan is a global financial services firm with operations in retail banking, "
         "investment banking, asset management, and payments. The document describes a strong focus "
-        "on technology, modernization of platforms, and digital services for clients."
+        "on technology, modern platforms, and digital services for clients."
     ),
     "what is jpmorgan main motive": (
         "JPMorgan main motive in the document is to strengthen its position as a leading global bank "
@@ -68,15 +72,28 @@ FAQ_QA = {
         "risk management, fraud detection, customer personalization, and internal productivity. The strategy is to embed "
         "AI into core processes while keeping strong governance and controls."
     ),
+    "what is jpmorgan cloud strategy": (
+        "JPMorgan shifts workloads to cloud, adopts hybrid models, strengthens resiliency, and modernizes legacy systems. "
+        "Cloud is used to support scalability, reliability, and faster delivery of products."
+    ),
 
     # JPMorgan workforce and investment
     "what is jpmorgan technology workforce": (
         "The document describes a very large technology workforce at JPMorgan, with tens of thousands of engineers "
         "and technologists supporting platforms, infrastructure, cybersecurity, and application development across the firm."
     ),
+    "how many engineers does jpmorgan have": (
+        "JPMorgan has tens of thousands of engineers and technologists who build and operate its core systems and digital products."
+    ),
     "what is jpmorgan technology investment": (
-        "The JPMorgan document highlights multi billion annual technology investment. The bank spends heavily each year "
+        "The JPMorgan document highlights multi billion yearly technology investment. The bank spends heavily each year "
         "on software development, infrastructure, cybersecurity, data platforms, and digital capabilities to support its businesses."
+    ),
+    "how much does jpmorgan invest in technology": (
+        "The document notes that JPMorgan spends many billions of dollars per year on technology, covering platforms, data, cloud, AI, and infrastructure."
+    ),
+    "what is jpmorgan technology focus": (
+        "JPMorgan technology focus includes cloud, cybersecurity, data platforms, AI, payments modernization, and simplified architecture."
     ),
 
     # Pfizer general
@@ -111,6 +128,12 @@ FAQ_QA = {
         "clinical trial complexity, regulatory requirements, competition from other therapies, and the need to manage "
         "resources across many programs. It emphasizes disciplined portfolio management and data driven decision making."
     ),
+    "what are pfizer r and d challenges": (
+        "Key challenges include scientific risk, clinical trial design, regulatory timelines, and competition from alternative therapies."
+    ),
+    "what is pfizer pipeline structure": (
+        "Pfizer pipeline is structured as a mix of early research projects, mid stage assets, late stage candidates, and near approval or launch programs."
+    ),
 
     # Google general
     "what is google": (
@@ -130,7 +153,7 @@ FAQ_QA = {
     # Google AI and cloud
     "what is google ai strategy": (
         "Google AI strategy is to develop state of the art models, integrate AI into its own products, and provide AI platforms "
-        "through Google Cloud so that customers can build their own solutions. The document highlights AI as a core technology that "
+        "through Google Cloud so that customers can build their own solutions. AI is presented as a core technology that "
         "supports productivity, analytics, and new applications."
     ),
     "what is google cloud strategy": (
@@ -146,6 +169,13 @@ FAQ_QA = {
     "what does google say about ai engineers": (
         "The document indicates that Google maintains large engineering and AI teams that work on core models, platforms, "
         "and tools. These engineers focus on improving model quality, reliability, and integration into products and cloud offerings."
+    ),
+    "what ai technologies does google highlight": (
+        "The Google document highlights advanced AI models, large scale training systems, custom accelerators, and enterprise AI solutions delivered through Google Cloud."
+    ),
+    "what is google digital transformation strategy": (
+        "Google digital transformation strategy is to help customers modernize using cloud, AI, data platforms, cybersecurity, "
+        "and open multi cloud tools that integrate with their existing landscapes."
     ),
 }
 
