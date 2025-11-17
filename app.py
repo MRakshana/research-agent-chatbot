@@ -9,6 +9,18 @@ st.caption(
     "Answers are based only on JPMorgan, Pfizer, and Google research documents plus live market data for these companies."
 )
 
+# sidebar with examples and detail mode
+with st.sidebar:
+    st.header("Try these questions")
+    st.write("- What is Google AI strategy")
+    st.write("- What is JPMorgan cloud strategy")
+    st.write("- How many programs does Pfizer have")
+    st.write("- What is Google recent performance")
+    st.write("- What challenges does Pfizer mention in R and D")
+    st.write("- What is JPMorgan recent profit")
+
+    detail_mode = st.checkbox("Enable detailed answers", value=False)
+
 # load index once
 if "index" not in st.session_state:
     st.session_state.index = ra.build_index()
@@ -26,7 +38,8 @@ if question:
     user_q = question.strip()
     lower_q = user_q.lower()
 
-    detail = False
+    # base detail flag from sidebar
+    detail = detail_mode
     base_question = user_q
 
     # follow up phrases that mean explain more
@@ -38,6 +51,7 @@ if question:
         "explain in detail",
     }
 
+    # if user types explain more, reuse last question and force detail
     if st.session_state.history and lower_q in followup_phrases:
         base_question = st.session_state.history[-1]["user"]
         detail = True
